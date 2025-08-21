@@ -1,0 +1,2 @@
+Time: 6s, Mistakes: 2
+Time: 4s, Mistakes: 8

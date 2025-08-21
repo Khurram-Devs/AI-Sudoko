@@ -3,9 +3,6 @@ import random
 import time
 
 
-# -------------------------------
-# Sudoku-like grid generator
-# -------------------------------
 def generate_sudoku(n=9):
     g = int(n**0.5)
     grid = [[0 for _ in range(n)] for _ in range(n)]
@@ -44,17 +41,13 @@ def generate_sudoku(n=9):
     return grid
 
 
-# -------------------------------
-# Sudoku App
-# -------------------------------
 class SudokuApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Sudoku Trainer")
         self.root.configure(bg="#1e1e1e")
-        self.root.geometry("500x550")  # fixed size
+        self.root.geometry("500x550")
 
-        self.mode = None
         self.grid = None
         self.solution = None
         self.selected = None
@@ -65,11 +58,8 @@ class SudokuApp:
         self.canvas = None
         self.cells = {}
 
-        self.start_game(0.05)
+        self.start_game(0.9)
 
-    # ---------------------------
-    # Game Screen
-    # ---------------------------
     def start_game(self, hide_ratio):
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -77,7 +67,6 @@ class SudokuApp:
         self.grid = generate_sudoku(9)
         self.solution = [row[:] for row in self.grid]
 
-        # Hide cells based on difficulty
         total = 81
         to_hide = int(total * hide_ratio)
         hidden = 0
@@ -87,7 +76,6 @@ class SudokuApp:
                 self.grid[r][c] = 0
                 hidden += 1
 
-        # Top bar (timer + mistakes)
         top_frame = tk.Frame(self.root, bg="#1e1e1e")
         top_frame.pack(fill="x", pady=10)
 
@@ -105,7 +93,6 @@ class SudokuApp:
         )
         self.mistake_label.pack(side="right", padx=20)
 
-        # Canvas for grid
         self.canvas = tk.Canvas(
             self.root, width=9 * 50, height=9 * 50, bg="#1e1e1e", highlightthickness=0
         )
@@ -134,7 +121,6 @@ class SudokuApp:
                     "locked": val != 0,
                 }
 
-        # bold box lines
         for i in range(10):
             w = 2 if i % 3 == 0 else 1
             self.canvas.create_line(0, i * 50, 9 * 50, i * 50, fill="#888", width=w)
@@ -143,13 +129,10 @@ class SudokuApp:
         self.canvas.bind("<Button-1>", self.on_click)
         self.root.bind("<Key>", self.on_key)
 
-        # Timer
         self.start_time = time.time()
+        self.mistakes = 0
         self.update_timer()
 
-    # ---------------------------
-    # Events
-    # ---------------------------
     def on_click(self, event):
         c = event.x // 50
         r = event.y // 50
@@ -175,24 +158,26 @@ class SudokuApp:
             self.canvas.itemconfig(cell["text"], text=str(val), fill="#00ff88")
             cell["locked"] = True
             self.canvas.itemconfig(cell["rect"], fill="#333")
+            if all(c["locked"] for c in self.cells.values()):
+                self.end_game()
         else:
             self.canvas.itemconfig(cell["text"], text=str(val), fill="#ff5555")
             self.mistakes += 1
             self.mistake_label.config(text=f"Mistakes: {self.mistakes}")
 
-    # ---------------------------
-    # Timer
-    # ---------------------------
     def update_timer(self):
         if self.start_time:
             elapsed = int(time.time() - self.start_time)
             self.timer_label.config(text=f"Time: {elapsed}s")
             self.root.after(1000, self.update_timer)
 
+    def end_game(self):
+        elapsed = int(time.time() - self.start_time)
+        with open("sudoku_stats.txt", "a") as f:
+            f.write(f"Time: {elapsed}s, Mistakes: {self.mistakes}\n")
+        self.root.after(2000, lambda: self.start_game(0.9))
 
-# -------------------------------
-# Run App
-# -------------------------------
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = SudokuApp(root)
